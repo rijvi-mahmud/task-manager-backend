@@ -220,6 +220,33 @@ workspace/membership rows, bulk-unassigns tasks, and advances task versions.
 Successful domain-change logs run after commit, so rolled-back writes do not
 produce a success audit log.
 
+## Team collaboration and update delivery
+
+Workspace membership gives multiple accounts access to one shared set of tasks.
+Every request resolves workspace permissions on the server; board data is not
+stored separately per browser or tab. PostgreSQL transactions make committed
+changes available to later reads. Task versions and membership-removal locks
+protect the editing and assignment invariants described above.
+
+The frontend discovers other clients' changes by polling the REST API every
+15 seconds while relevant queries are observed in a visible tab, and by refetching
+stale data when returning to a tab. The initiating client also revalidates affected
+queries after its own writes. The backend exposes no WebSocket or SSE endpoint,
+change subscription, presence indicator, or typing/drag broadcast.
+
+Tabs in one browser profile share the session cookie. They have independent
+frontend caches, and recheck the session on focus or after a protected-request
+`401`. Separate browser profiles/private windows allow testing two accounts at
+once. Password-reset completion revokes the affected account's persisted sessions
+after commit; other clients discover that revocation on a subsequent session or
+protected request.
+
+Polling is a deliberate fit for this project's collaboration needs. Visible
+changes are eventually refreshed rather than delivered instantly. If immediate
+server-to-client notifications become a requirement, SSE or WebSockets would be
+an additional feature, including workspace authorization and multi-instance event
+delivery; neither is implied by the current transaction logging events.
+
 ## HTTP and JSON format specification
 
 The canonical major-version prefix is `/api/v1`; JSON uses camelCase properties.
