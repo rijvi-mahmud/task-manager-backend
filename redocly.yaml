@@ -1,0 +1,8 @@
+# OpenAPI lint config. Run with the backend up:
+#   npx @redocly/cli lint http://localhost:8080/v3/api-docs
+extends:
+  - recommended
+
+rules:
+  # Intentionally unlicensed: this API is not published for third-party use.
+  info-license: off
